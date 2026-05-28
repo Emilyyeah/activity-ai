@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 小程序活动生成系统 — 方案思路</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #F2F2F7;
+    --card: #FFFFFF;
+    --text: #1A1A2E;
+    --text2: #555;
+    --text3: #888;
+    --orange: #F98311;
+    --green: #34C759;
+    --blue: #007AFF;
+    --red: #FF3B30;
+    --purple: #AF52DE;
+    --shadow: 0 2px 16px rgba(0,0,0,0.06);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Header ── */
+  .hero {
+    background: var(--card);
+    padding: 80px 40px 60px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--orange), var(--blue), var(--purple));
+  }
+  .hero h1 {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 12px;
+  }
+  .hero .subtitle {
+    font-size: 18px;
+    color: var(--text2);
+    font-weight: 400;
+    margin-bottom: 24px;
+  }
+  .hero .tagline {
+    display: inline-block;
+    background: #FFF5EB;
+    color: var(--orange);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 24px;
+    border-radius: 20px;
+  }
+
+  /* ── Layout ── */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  .section {
+    margin: 48px 0;
+  }
+  .section-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    background: var(--orange);
+    color: #fff;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .section-desc {
+    color: var(--text2);
+    font-size: 15px;
+    margin-bottom: 28px;
+    padding-left: 48px;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    padding: 32px;
+    margin-bottom: 20px;
+    transition: box-shadow 0.3s;
+  }
+  .card:hover {
+    box-shadow: var(--shadow-lg);
+  }
+  .card-title {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── Core Model Banner ── */
+  .core-model {
+    background: var(--card);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    padding: 40px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .core-model h3 {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+  .core-formula {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .formula-box {
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 16px;
+  }
+  .formula-box.a { background: #FFF5EB; color: var(--orange); }
+  .formula-box.b { background: #E8F5E9; color: var(--green); }
+  .formula-box.c { background: #E3F2FD; color: var(--blue); }
+  .formula-op {
+    font-size: 22px;
+    color: var(--text3);
+    font-weight: 300;
+  }
+  .core-model .note {
+    color: var(--text2);
+    font-size: 14px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* ── Architecture ── */
+  .arch-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+  .arch-lane {
+    background: var(--card);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .arch-lane::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .arch-lane.a::before { background: var(--orange); }
+  .arch-lane.b::before { background: var(--blue); }
+  .arch-lane .lane-badge {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .arch-lane.a .lane-badge { color: var(--orange); }
+  .arch-lane.b .lane-badge { color: var(--blue); }
+  .arch-lane h4 { font-size: 18px; margin-bottom: 12px; }
+  .arch-lane p { font-size: 13px; color: var(--text2); margin-bottom: 16px; }
+
+  .lane-flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+  }
+  .lane-step {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+  .arch-lane.a .lane-step { background: #FFF5EB; color: var(--orange); }
+  .arch-lane.b .lane-step { background: #E3F2FD; color: var(--blue); }
+  .lane-arrow {
+    font-size: 14px;
+    color: var(--text3);
+    padding: 0 4px;
+  }
+
+  .arch-bridge {
+    background: var(--card);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text2);
+  }
+  .bridge-icon {
+    font-size: 24px;
+  }
+  .arch-layers {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 24px;
+  }
+  .arch-layer {
+    background: var(--card);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 20px;
+    text-align: center;
+  }
+  .arch-layer .layer-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text3);
+    margin-bottom: 8px;
+  }
+  .arch-layer h5 { font-size: 15px; margin-bottom: 6px; }
+  .arch-layer p { font-size: 12px; color: var(--text2); }
+
+  /* ── Component Structure ── */
+  .comp-struct {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .comp-field {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 16px;
+    background: #FAFAFA;
+    border-radius: 12px;
+  }
+  .comp-field-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    color: #fff;
+    font-weight: 700;
+  }
+  .comp-field h5 { font-size: 14px; margin-bottom: 2px; }
+  .comp-field p { font-size: 12px; color: var(--text2); }
+
+  /* ── Flow Diagram ── */
+  .flow-main {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .flow-step-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+  }
+  .flow-step-num {
+    width: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .flow-step-num .circle {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+  .flow-step-num .line {
+    flex: 1;
+    width: 2px;
+    background: #E0E0E0;
+  }
+  .flow-step-content {
+    flex: 1;
+    padding: 0 0 32px 20px;
+  }
+  .flow-step-content h4 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .flow-step-content h4 .role-tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+  }
+  .role-ai { background: #E3F2FD; color: var(--blue); }
+  .role-user { background: #FFF5EB; color: var(--orange); }
+  .role-both { background: #F3E5F5; color: var(--purple); }
+  .flow-step-content p {
+    font-size: 14px;
+    color: var(--text2);
+    margin-bottom: 10px;
+  }
+  .flow-detail-box {
+    background: #FAFAFA;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 8px;
+  }
+  .flow-detail-box h5 {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .flow-detail-box ul {
+    list-style: none;
+    padding: 0;
+  }
+  .flow-detail-box li {
+    font-size: 13px;
+    color: var(--text2);
+    padding: 3px 0;
+    padding-left: 16px;
+    position: relative;
+  }
+  .flow-detail-box li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 11px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #D0D0D0;
+  }
+
+  /* ── Match Table ── */
+  .match-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 13px;
+    margin-top: 12px;
+  }
+  .match-table th {
+    background: #F2F2F7;
+    padding: 10px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--text3);
+    letter-spacing: 0.5px;
+  }
+  .match-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid #F0F0F0;
+  }
+  .match-table tr:last-child td { border-bottom: none; }
+  .confidence {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 12px;
+  }
+  .conf-high { background: #E8F5E9; color: var(--green); }
+  .conf-mid { background: #FFF8E1; color: #F9A825; }
+
+  /* ── Param Zones ── */
+  .param-zones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 12px;
+  }
+  .param-zone {
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .param-zone.auto {
+    background: #E8F5E9;
+    border: 1.5px solid #C8E6C9;
+  }
+  .param-zone.manual {
+    background: #FFF3E0;
+    border: 1.5px solid #FFE0B2;
+  }
+  .param-zone h5 {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .param-zone.auto h5 { color: var(--green); }
+  .param-zone.manual h5 { color: var(--orange); }
+  .param-zone li {
+    font-size: 12px;
+    color: var(--text2);
+    padding: 3px 0;
+    list-style: none;
+    padding-left: 14px;
+    position: relative;
+  }
+  .param-zone li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 9px;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+  }
+  .param-zone.auto li::before { background: var(--green); }
+  .param-zone.manual li::before { background: var(--orange); }
+
+  /* ── Component Create Flow (Horizontal) ── */
+  .hflow {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    overflow-x: auto;
+    padding: 8px 0;
+  }
+  .hflow-step {
+    text-align: center;
+    min-width: 140px;
+    flex-shrink: 0;
+  }
+  .hflow-icon {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    font-size: 22px;
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .hflow-step h5 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .hflow-step p { font-size: 11px; color: var(--text2); padding: 0 8px; }
+  .hflow-arrow {
+    display: flex;
+    align-items: center;
+    padding-top: 16px;
+    color: #CCC;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  /* ── History ── */
+  .hist-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .hist-card {
+    background: #FAFAFA;
+    border-radius: 12px;
+    padding: 20px;
+    transition: transform 0.2s;
+  }
+  .hist-card:hover { transform: translateY(-2px); }
+  .hist-card h5 { font-size: 14px; margin-bottom: 6px; }
+  .hist-card .meta { font-size: 12px; color: var(--text3); margin-bottom: 10px; }
+  .hist-card .status {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 6px;
+  }
+  .status-done { background: #F0F0F0; color: var(--text3); }
+  .status-live { background: #E8F5E9; color: var(--green); }
+
+  /* ── Timeline ── */
+  .timeline {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .tl-item {
+    background: var(--card);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .tl-item:nth-child(1)::before { background: var(--orange); }
+  .tl-item:nth-child(2)::before { background: var(--blue); }
+  .tl-item:nth-child(3)::before { background: var(--purple); }
+  .tl-item:nth-child(4)::before { background: var(--green); }
+  .tl-item .tl-phase {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .tl-item:nth-child(1) .tl-phase { color: var(--orange); }
+  .tl-item:nth-child(2) .tl-phase { color: var(--blue); }
+  .tl-item:nth-child(3) .tl-phase { color: var(--purple); }
+  .tl-item:nth-child(4) .tl-phase { color: var(--green); }
+  .tl-item h5 { font-size: 15px; margin-bottom: 8px; }
+  .tl-item ul {
+    list-style: none;
+    padding: 0;
+  }
+  .tl-item li {
+    font-size: 12px;
+    color: var(--text2);
+    padding: 3px 0 3px 14px;
+    position: relative;
+  }
+  .tl-item li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 10px;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #D0D0D0;
+  }
+  .tl-item .tl-output {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #F0F0F0;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* ── Risk Table ── */
+  .risk-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .risk-item {
+    background: var(--card);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 24px;
+  }
+  .risk-item h5 {
+    font-size: 14px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .risk-item h5 .risk-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--red);
+    flex-shrink: 0;
+  }
+  .risk-item .impact {
+    font-size: 12px;
+    color: var(--red);
+    margin-bottom: 8px;
+  }
+  .risk-item .solution {
+    font-size: 13px;
+    color: var(--text2);
+    padding-left: 16px;
+    border-left: 2px solid #E0E0E0;
+  }
+
+  /* ── Lifecycle Diagram ── */
+  .lifecycle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 20px 0;
+    flex-wrap: wrap;
+  }
+  .lc-node {
+    text-align: center;
+    padding: 14px 22px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    position: relative;
+  }
+  .lc-node small {
+    display: block;
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+  .lc-arrow {
+    font-size: 18px;
+    color: #CCC;
+    padding: 0 6px;
+  }
+  .lc-node.ai { background: #E3F2FD; color: var(--blue); }
+  .lc-node.human { background: #FFF5EB; color: var(--orange); }
+  .lc-node.done { background: #E8F5E9; color: var(--green); }
+  .lc-node.lib { background: #1A1A2E; color: #fff; }
+  .lc-node.use { background: var(--orange); color: #fff; }
+
+  .lc-divider {
+    width: 1px;
+    height: 50px;
+    background: #E0E0E0;
+    margin: 0 20px;
+    position: relative;
+  }
+  .lc-divider::after {
+    content: '入库';
+    position: absolute;
+    top: -10px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: var(--text3);
+    white-space: nowrap;
+    background: var(--bg);
+    padding: 0 6px;
+  }
+
+  /* ── Copy Flow ── */
+  .copy-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 16px 0;
+    flex-wrap: wrap;
+  }
+  .copy-node {
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+  }
+  .copy-node.hist { background: #F0F0F0; color: var(--text2); }
+  .copy-node.skip { background: #E3F2FD; color: var(--blue); }
+  .copy-node.edit { background: #FFF5EB; color: var(--orange); }
+  .copy-node.pub { background: #E8F5E9; color: var(--green); }
+  .copy-arrow { font-size: 16px; color: #CCC; padding: 0 6px; }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text3);
+    font-size: 13px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .arch-grid, .comp-struct, .param-zones, .risk-grid { grid-template-columns: 1fr; }
+    .timeline { grid-template-columns: 1fr 1fr; }
+    .hist-cards { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 28px; }
+    .lifecycle, .copy-flow { gap: 4px; }
+    .lc-node { padding: 10px 14px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════ HERO ════════ -->
+<header class="hero">
+  <h1>AI 小程序活动生成系统</h1>
+  <p class="subtitle">方案思路文档</p>
+  <span class="tagline">一次连调，永久复用 — 把活动开发周期从天级压缩到分钟级</span>
+</header>
+
+<div class="container">
+
+<!-- ════════ 1. 系统定位 ════════ -->
+<div class="section">
+  <h2 class="section-title"><span class="num">1</span>系统定位</h2>
+  <p class="section-desc">AI 驱动的低代码活动工厂，核心能力 = 视觉识别 + 组件编排 + 参数配置自动化</p>
+
+  <div class="core-model">
+    <h3>核心模型</h3>
+    <div class="core-formula">
+      <span class="formula-box a">AI 生成组件代码</span>
+      <span class="formula-op">+</span>
+      <span class="formula-box b">人工一次性连调</span>
+      <span class="formula-op">=</span>
+      <span class="formula-box c">永久可复用的成品积木</span>
+    </div>
+    <p class="note">每个组件只在入库前需要开发介入一次，之后所有活动创建都是运营自助完成。组件库像滚雪球一样越滚越大，系统越用越快。</p>
+  </div>
+</div>
+
+<!-- ════════ 2. 系统架构 ════════ -->
+<div class="section">
+  <h2 class="section-title"><span class="num">2</span>系统架构</h2>
+  <p class="section-desc">两条主线 + 三层架构，组件库是连接两条主线的核心枢纽</p>
+
+  <div class="arch-grid">
+    <!-- 主线A -->
+    <div class="arch-lane a">
+      <div class="lane-badge">主线 A</div>
+      <h4>造积木 — 组件生产线</h4>
+      <p>AI 生成组件前端代码，人工完成连调后入库，形成可直接调用的成品组件</p>
+      <div class="lane-flow">
+        <span class="lane-step">描述需求</span>
+        <span class="lane-arrow">→</span>
+        <span class="lane-step">AI 生成代码</span>
+        <span class="lane-arrow">→</span>
+        <span class="lane-step">人工连调</span>
+        <span class="lane-arrow">→</span>
+        <span class="lane-step">测试入库</span>
+      </div>
+    </div>
+    <!-- 主线B -->
+    <div class="arch-lane b">
+      <div class="lane-badge">主线 B</div>
+      <h4>搭积木 — 活动生产线</h4>
+      <p>运营上传 UI，AI 识别匹配组件，确认配参后发布。全程零开发介入</p>
+      <div class="lane-flow">
+        <span class="lane-step">上传 UI</span>
+        <span class="lane-arrow">→</span>
+        <span class="lane-step">AI 识别</span>
+        <span class="lane-arrow">→</span>
+        <span class="lane-step">确认配参</span>
+        <span class="lane-arrow">→</span>
+        <span class="lane-step">预览发布</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 桥梁 -->
+  <div class="arch-bridge">
+    <span class="bridge-icon">🧱</span>
+    <span>组件功能库 — 两条主线的连接枢纽，主线 A 产出成品积木，主线 B 消费积木搭建活动</span>
+  </div>
+
+  <!-- 三层 -->
+  <div class="arch-layers">
+    <div class="arch-layer">
+      <div class="layer-label">LAYER 1</div>
+      <h5>运营操作层</h5>
+      <p>AI 会话窗口、活动创建流程、历史活动管理、预览与发布</p>
+    </div>
+    <div class="arch-layer">
+      <div class="layer-label">LAYER 2</div>
+      <h5>AI 引擎层</h5>
+      <p>UI 视觉识别、组件匹配、布局编排、参数推理、对话式改参</p>
+    </div>
+    <div class="arch-layer">
+      <div class="layer-label">LAYER 3</div>
+      <h5>底座能力层</h5>
+      <p>组件功能库、组件运行时、服务端接口、配置热更新发布引擎</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ 3. 组件生产线 ════════ -->
+<div class="section">
+  <h2 class="section-title"><span class="num">3</span>主线 A：组件生产线</h2>
+  <p class="section-desc">AI 快速生产 + 人工质检入库，组件扩展速度从「周级」变成「天级甚至小时级」</p>
+
+  <!-- 组件生命周期 -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--orange)"></span>组件生命周期</div>
+    <div class="lifecycle">
+      <div class="lc-node ai">AI 生成<small>前端交互代码</small></div>
+      <span class="lc-arrow">→</span>
+      <div class="lc-node human">人工连调<small>对接后端接口</small></div>
+      <span class="lc-arrow">→</span>
+      <div class="lc-node done">测试通过<small>功能验收</small></div>
+      <span class="lc-arrow">→</span>
+      <div class="lc-node lib">入库<small>status: available</small></div>
+      <div class="lc-divider" style="margin:0 24px"></div>
+      <div class="lc-node use">直接调用<small>零开发介入</small></div>
+    </div>
+    <p style="text-align:center;font-size:13px;color:var(--text3)">分界线左侧 = 一次性成本 ｜ 右侧 = 无限次零成本复用</p>
+  </div>
+
+  <!-- 组件创建流程 -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--blue)"></span>组件创建流程</div>
+    <div class="hflow">
+      <div class="hflow-step">
+        <div class="hflow-icon" style="background:var(--blue)">1</div>
+        <h5>描述需求</h5>
+        <p>在 AI 会话中用自然语言描述组件功能</p>
+      </div>
+      <div class="hflow-arrow">→</div>
+      <div class="hflow-step">
+        <div class="hflow-icon" style="background:var(--blue)">2</div>
+        <h5>AI 生成</h5>
+        <p>输出前端代码 + 参数 Schema + 接口清单</p>
+      </div>
+      <div class="hflow-arrow">→</div>
+      <div class="hflow-step">
+        <div class="hflow-icon" style="background:var(--orange)">3</div>
+        <h5>人工连调</h5>
+        <p>开发对接后端接口，完成联调测试</p>
+      </div>
+      <div class="hflow-arrow">→</div>
+      <div class="hflow-step">
+        <div class="hflow-icon" style="background:var(--green)">4</div>
+        <h5>测试验收</h5>
+        <p>功能 + 参数配置全面测试</p>
+      </div>
+      <div class="hflow-arrow">→</div>
+      <div class="hflow-step">
+        <div class="hflow-icon" style="background:#1A1A2E">5</div>
+        <h5>入库</h5>
+        <p>成品组件，后续直接调用</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 组件数据结构 -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--purple)"></span>组件数据结构</div>
+    <div class="comp-struct">
+      <div class="comp-field">
+        <div class="comp-field-icon" style="background:var(--blue)">ID</div>
+        <div>
+          <h5>标识与分类</h5>
+          <p>唯一ID、组件名称、功能类别（抽奖/任务/展示/兑换）、状态（draft → testing → available）</p>
+        </div>
+      </div>
+      <div class="comp-field">
+        <div class="comp-field-icon" style="background:var(--purple)">AI</div>
+        <div>
+          <h5>视觉特征签名</h5>
+          <p>视觉描述 + 关键词，供 AI 在识别 UI 时匹配。如"圆形转盘，扇形分区，中心指针按钮"</p>
+        </div>
+      </div>
+      <div class="comp-field">
+        <div class="comp-field-icon" style="background:var(--orange)">FE</div>
+        <div>
+          <h5>前端成品代码</h5>
+          <p>AI 生成 + 人工连调后的完整组件包，含换肤配置（颜色插槽、布局模式）</p>
+        </div>
+      </div>
+      <div class="comp-field">
+        <div class="comp-field-icon" style="background:var(--green)">P</div>
+        <div>
+          <h5>参数 Schema</h5>
+          <p>每个可配置参数的类型、默认值、是否必填。关键字段 <strong>ai_inferable</strong>：标记 AI 能否从 UI 文案推理</p>
+        </div>
+      </div>
+    </div>
+    <p style="margin-top:16px;font-size:13px;color:var(--text2);padding:0 16px"><strong>ai_inferable</strong> 是核心设计 —— 它决定活动创建时哪些参数 AI 自动填（如"每日3次"→ daily_limit=3），哪些必须运营手填（如奖品内容、活动时间）</p>
+  </div>
+
+  <!-- 组件分类 -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--green)"></span>组件分类示例</div>
+    <table class="match-table">
+      <tr><th>类别</th><th>典型组件</th></tr>
+      <tr><td>抽奖类</td><td>转盘抽奖、九宫格抽奖、盲盒、刮刮卡</td></tr>
+      <tr><td>任务类</td><td>签到、邀请好友、分享任务、浏览任务</td></tr>
+      <tr><td>展示类</td><td>Banner、弹窗、倒计时、活动规则</td></tr>
+      <tr><td>兑换类</td><td>积分商城、兑换码、奖品记录</td></tr>
+      <tr><td>互动类</td><td>排行榜、投票、问答</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ════════ 4. 活动生产线 ════════ -->
+<div class="section">
+  <h2 class="section-title"><span class="num">4</span>主线 B：活动生产线（核心流程）</h2>
+  <p class="section-desc">纯运营操作，零开发介入。6 步完成从设计稿到上线活动</p>
+
+  <div class="card" style="padding:40px 32px">
+    <div class="flow-main">
+
+      <!-- Step 1 -->
+      <div class="flow-step-row">
+        <div class="flow-step-num">
+          <div class="circle" style="background:var(--orange)">1</div>
+          <div class="line"></div>
+        </div>
+        <div class="flow-step-content">
+          <h4>上传活动 UI <span class="role-tag role-user">运营</span></h4>
+          <p>在 AI 会话窗口中拖拽上传设计稿</p>
+          <div class="flow-detail-box">
+            <ul>
+              <li>支持格式：PNG / JPG / PSD / Figma 链接</li>
+              <li>支持上传多张（不同页面、弹窗、各状态截图）</li>
+              <li>AI 会话窗口中直接拖拽或粘贴</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="flow-step-row">
+        <div class="flow-step-num">
+          <div class="circle" style="background:var(--blue)">2</div>
+          <div class="line"></div>
+        </div>
+        <div class="flow-step-content">
+          <h4>AI 识别 + 组件匹配 <span class="role-tag role-ai">AI</span></h4>
+          <p>AI 对上传的 UI 执行两个动作：区域切割 + 组件匹配</p>
+          <div class="flow-detail-box">
+            <h5>动作 1：视觉区域切割</h5>
+            <p style="font-size:13px;color:var(--text2);margin-bottom:12px">把完整 UI 拆分为多个功能区域（顶部 Banner 区、中部抽奖区、底部任务区等）</p>
+            <h5>动作 2：组件匹配</h5>
+            <p style="font-size:13px;color:var(--text2);margin-bottom:12px">每个区域在组件库（status=available）中匹配最相似的组件</p>
+            <table class="match-table">
+              <tr><th>UI 区域</th><th>匹配组件</th><th>置信度</th></tr>
+              <tr><td>顶部</td><td>活动 Banner</td><td><span class="confidence conf-high">96%</span></td></tr>
+              <tr><td>中部</td><td>转盘抽奖</td><td><span class="confidence conf-high">91%</span></td></tr>
+              <tr><td>底部</td><td>任务列表</td><td><span class="confidence conf-mid">87%</span></td></tr>
+              <tr><td>悬浮层</td><td>奖品记录入口</td><td><span class="confidence conf-high">90%</span></td></tr>
+            </table>
+          </div>
+          <div class="flow-detail-box" style="margin-top:12px">
+            <h5>技术实现</h5>
+            <ul>
+              <li>多模态大模型（GPT-4o / Claude）做视觉理解</li>
+              <li>Prompt 中注入组件库清单（名称 + 视觉特征描述）作为匹配候选</li>
+              <li>输出结构化 JSON，非自由文本</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="flow-step-row">
+        <div class="flow-step-num">
+          <div class="circle" style="background:var(--orange)">3</div>
+          <div class="line"></div>
+        </div>
+        <div class="flow-step-content">
+          <h4>确认组件清单 <span class="role-tag role-user">运营</span></h4>
+          <p>AI 输出识别结果卡片，运营逐个确认或批量确认</p>
+          <div class="flow-detail-box">
+            <ul>
+              <li>✅ 确认识别正确</li>
+              <li>✏️ 修正错误匹配（从组件库中重新选择）</li>
+              <li>➕ 补充遗漏的组件</li>
+              <li>➖ 删除多余的识别</li>
+              <li>⚠️ 库中无匹配组件时，提示"是否进入组件创建流程？"—— 无缝跳转主线 A</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="flow-step-row">
+        <div class="flow-step-num">
+          <div class="circle" style="background:var(--purple)">4</div>
+          <div class="line"></div>
+        </div>
+        <div class="flow-step-content">
+          <h4>AI 自动配参 + 运营补充 <span class="role-tag role-both">AI + 运营</span></h4>
+          <p>AI 自动编排布局、映射样式、推理参数；运营补充 AI 无法推理的参数</p>
+          <div class="flow-detail-box">
+            <h5>AI 自动执行</h5>
+            <ul>
+              <li>布局编排：按 UI 空间位置排列组件渲染顺序和层级关系</li>
+              <li>样式映射：提取 UI 配色 / 字体 / 圆角，写入组件样式插槽</li>
+              <li>参数预填：扫描 UI 文案，推理 ai_inferable=true 的参数</li>
+            </ul>
+          </div>
+          <div class="param-zones">
+            <div class="param-zone auto">
+              <h5>🟢 AI 已推理（请确认）</h5>
+              <ul>
+                <li>每日抽奖次数：3次 — 依据 UI 文案"每日3次机会"</li>
+                <li>单次消耗积分：10 — 依据 UI 文案"消耗10积分"</li>
+                <li>奖品格位数：8个 — 依据 UI 布局识别</li>
+              </ul>
+            </div>
+            <div class="param-zone manual">
+              <h5>🔴 需要你填写</h5>
+              <ul>
+                <li>活动时间：起止日期</li>
+                <li>奖品列表：名称、图标、中奖概率</li>
+                <li>未中奖提示语</li>
+                <li>参与条件 / 用户等级限制</li>
+              </ul>
+            </div>
+          </div>
+          <p style="margin-top:12px;font-size:13px;color:var(--text2)">运营也可以用对话方式修改："把每日次数改成5次""一等奖设成100元红包，概率1%"</p>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="flow-step-row">
+        <div class="flow-step-num">
+          <div class="circle" style="background:var(--green)">5</div>
+          <div class="line"></div>
+        </div>
+        <div class="flow-step-content">
+          <h4>预览 <span class="role-tag role-user">运营</span></h4>
+          <p>真实组件渲染 + Mock 数据，所见即所得</p>
+          <div class="flow-detail-box">
+            <ul>
+              <li>PC 端即时预览活动页面</li>
+              <li>支持手机扫码真机预览</li>
+              <li>不满意可返回 Step 4 继续调整参数</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="flow-step-row">
+        <div class="flow-step-num">
+          <div class="circle" style="background:#1A1A2E">6</div>
+        </div>
+        <div class="flow-step-content">
+          <h4>发布 <span class="role-tag role-user">运营</span></h4>
+          <p>一键发布，配置自动存入历史活动列表</p>
+          <div class="flow-detail-box">
+            <ul>
+              <li>生成活动链接 / 小程序码</li>
+              <li>配置热更新，不走小程序审核流程（配置驱动，非代码驱动）</li>
+              <li>自动归档到历史活动列表，支持后续一键复制</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /flow-main -->
+  </div>
+</div>
+
+<!-- ════════ 5. 历史活动管理 ════════ -->
+<div class="section">
+  <h2 class="section-title"><span class="num">5</span>历史活动管理</h2>
+  <p class="section-desc">按项目分组存档，一键复制快速创建新活动</p>
+
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--orange)"></span>活动列表示例</div>
+    <div class="hist-cards">
+      <div class="hist-card">
+        <h5>春节转盘活动</h5>
+        <div class="meta">项目 A · 2026-01-25</div>
+        <span class="status status-done">已结束</span>
+      </div>
+      <div class="hist-card">
+        <h5>五一签到活动</h5>
+        <div class="meta">项目 A · 2026-05-01</div>
+        <span class="status status-done">已结束</span>
+      </div>
+      <div class="hist-card">
+        <h5>618 大促活动</h5>
+        <div class="meta">项目 A · 2026-06-18</div>
+        <span class="status status-live">进行中</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--blue)"></span>一键复制流程</div>
+    <div class="copy-flow">
+      <div class="copy-node hist">点击历史活动「复制」</div>
+      <span class="copy-arrow">→</span>
+      <div class="copy-node skip">跳过 Step 1-3<br><small style="font-weight:400;font-size:11px">无需重新上传UI和识别</small></div>
+      <span class="copy-arrow">→</span>
+      <div class="copy-node edit">进入 Step 4<br><small style="font-weight:400;font-size:11px">带入历史配置，对话改参</small></div>
+      <span class="copy-arrow">→</span>
+      <div class="copy-node pub">预览 → 发布</div>
+    </div>
+    <p style="font-size:13px;color:var(--text2);text-align:center;margin-top:8px">复制带入：组件清单 + 布局 + 样式 + 全部参数配置。运营只需改差异部分。</p>
+    <p style="font-size:13px;color:var(--text2);text-align:center">支持会话式修改："活动时间改到下周" "奖品概率调一下" "把Banner换成新图"</p>
+  </div>
+</div>
+
+<!-- ════════ 6. 技术选型 ════════ -->
+<div class="section">
+  <h2 class="section-title"><span class="num">6</span>技术选型建议</h2>
+  <p class="section-desc">各层级推荐方案</p>
+
+  <div class="card">
+    <table class="match-table">
+      <tr><th style="width:180px">层级</th><th>推荐方案</th></tr>
+      <tr><td><strong>AI 视觉识别</strong></td><td>Claude / GPT-4o 多模态，Prompt Engineering + 组件库上下文注入</td></tr>
+      <tr><td><strong>组件运行时</strong></td><td>小程序原生组件框架，每个组件独立包，动态加载</td></tr>
+      <tr><td><strong>活动配置存储</strong></td><td>JSON Schema 描述活动结构，存 DB，运行时解析渲染</td></tr>
+      <tr><td><strong>AI 会话框架</strong></td><td>类 ChatBot UI，支持富文本卡片（组件确认卡片、参数表单卡片）</td></tr>
+      <tr><td><strong>预览能力</strong></td><td>小程序真机预览 / H5 预览页（共用组件渲染层）</td></tr>
+      <tr><td><strong>发布引擎</strong></td><td>活动配置热更新，不走小程序审核（配置驱动，非代码驱动）</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ════════ 7. 落地节奏 ════════ -->
+<div class="section">
+  <h2 class="section-title"><span class="num">7</span>落地节奏</h2>
+  <p class="section-desc">4 个阶段，约 8 周跑通核心能力，之后持续滚雪球</p>
+
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-phase">PHASE 1 · 3周</div>
+      <h5>定标准 + 造第一批积木</h5>
+      <ul>
+        <li>定义组件标准和数据结构</li>
+        <li>AI 生成 10 个核心组件代码</li>
+        <li>人工完成后端连调入库</li>
+      </ul>
+      <div class="tl-output">交付：10 个可用组件的功能库</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-phase">PHASE 2 · 3周</div>
+      <h5>跑通活动生产线</h5>
+      <ul>
+        <li>UI 识别 + 组件匹配 Prompt 调优</li>
+        <li>自动配参 + 参数表单生成</li>
+        <li>预览 + 发布链路</li>
+      </ul>
+      <div class="tl-output">交付：端到端跑通真实活动</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-phase">PHASE 3 · 2周</div>
+      <h5>历史管理 + 体验打磨</h5>
+      <ul>
+        <li>历史活动列表 + 一键复制</li>
+        <li>会话式改参体验优化</li>
+        <li>样式映射 / UI 还原度提升</li>
+      </ul>
+      <div class="tl-output">交付：完整可用的产品</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-phase">PHASE 4 · 持续</div>
+      <h5>滚雪球</h5>
+      <ul>
+        <li>每做一次新活动就积累组件</li>
+        <li>组件越多 → 匹配越准</li>
+        <li>创建速度持续加快</li>
+      </ul>
+      <div class="tl-output">飞轮效应，越用越快</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ 8. 风险与应对 ════════ -->
+<div class="section">
+  <h2 class="section-title"><span class="num">8</span>关键风险与应对</h2>
+  <p class="section-desc">识别核心风险，提前准备应对策略</p>
+
+  <div class="risk-grid">
+    <div class="risk-item">
+      <h5><span class="risk-dot"></span>AI 识别准确率不够</h5>
+      <div class="impact">运营需大量手动修正，体验差</div>
+      <div class="solution">初期限定支持的组件类型，收窄识别范围。积累标注数据持续优化 Prompt，逐步扩展覆盖面。</div>
+    </div>
+    <div class="risk-item">
+      <h5><span class="risk-dot"></span>UI 还原度低</h5>
+      <div class="impact">发布的活动和设计稿视觉差距大</div>
+      <div class="solution">组件样式插槽足够灵活，支持深度换肤。复杂视觉效果走"UI 切图贴皮"而非代码还原。</div>
+    </div>
+    <div class="risk-item">
+      <h5><span class="risk-dot"></span>组件库覆盖不足</h5>
+      <div class="impact">遇到新玩法就卡住，无法生成</div>
+      <div class="solution">Phase 1 做好组件标准，让新组件快速入库有章可循。AI 辅助生成前端代码，压缩组件生产周期。</div>
+    </div>
+    <div class="risk-item">
+      <h5><span class="risk-dot"></span>参数配置出错上线</h5>
+      <div class="impact">线上事故，如概率配错、奖品异常</div>
+      <div class="solution">发布前强制预览 + 参数合法性校验（概率总和=100% 等）。关键参数（概率/奖品）双人确认机制。</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<div class="footer">
+  AI 小程序活动生成系统 · 方案思路 · 2026.05
+</div>
+
+</body>
+</html>
